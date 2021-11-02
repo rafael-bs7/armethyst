@@ -273,7 +273,7 @@ int BasicCPU::decodeDataProcReg() {
 				B = auxB >> imm6;
 				break;
 					
-				case 2; //Caso 10 ASR (sofre o deslocamento aritmetico mantendo o sinal para direita)
+				case 2: //Caso 10 ASR (sofre o deslocamento aritmetico mantendo o sinal para direita)
 				B = ((signed long)auxB) >> imm6;
 				break;
 				
