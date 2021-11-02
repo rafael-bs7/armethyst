@@ -294,7 +294,7 @@ int BasicCPU::decodeDataProcReg() {
 			// atribuir ALUctrl
 			ALUctrl = ALUctrlFlag::ADD;
 			
-			return 0;
+			return 1;
 		
 	}
 	
