@@ -294,8 +294,7 @@ int BasicCPU::decodeDataProcReg() {
 			// atribuir ALUctrl
 			ALUctrl = ALUctrlFlag::ADD;
 			
-			return 1;
-		
+			return 0;
 	}
 	
 	// instrução não implementada
@@ -347,7 +346,8 @@ int BasicCPU::EXI()
 			
 		case ALUctrlFlag::ADD:
 			ALUout = A + B;
-			return 0;	
+			return 0;
+			
 		default:
 			// Controle não implementado
 			return 1;
