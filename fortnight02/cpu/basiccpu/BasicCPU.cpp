@@ -230,15 +230,6 @@ int BasicCPU::decodeLoadStore() {
  */
 int BasicCPU::decodeDataProcReg() {
 	
-	//*********************************************************************************************
-	
-	// TODO
-	//		acrescentar um switch no estilo do switch de decodeDataProcImm,
-	//		e implementar APENAS PARA A INSTRUÇÃO A SEGUIR:
-	//				'add w1, w1, w0'
-	//		que aparece na linha 43 de isummation.S e no endereço 0x68
-	//		de txt_isummation.o.txt.
-	
 	//IMPLEMENTAR O REO P03 AQUI
 	
 	unsigned int n, m, imm6, shift;
@@ -293,15 +284,6 @@ int BasicCPU::decodeDataProcReg() {
 			
 			// atribuir ALUctrl
 			ALUctrl = ALUctrlFlag::ADD;
-			
-			// atribuir MEMctrl
-			MEMctrl = MEMctrlFlag::MEM_NONE;
-			
-			// atribuir WBctrl
-			WBctrl = WBctrlFlag::RegWrite;
-			
-			// atribuir MemtoReg
-			MemtoReg = false;
 			
 			return 0;
 	}
