@@ -185,7 +185,7 @@ void test01(BasicCPUTest* cpu, BasicMemoryTest* memory, string fname)
  */
 void test02(BasicCPUTest* cpu, BasicMemoryTest* memory, string fname)
 {
-	float fA = -0.7;
+	/* float fA = -0.7;
 	float fB = 0.5;
 
 	TEST_HEADER
@@ -253,7 +253,7 @@ void test02(BasicCPUTest* cpu, BasicMemoryTest* memory, string fname)
 	xpctdRd = xpctdALUout;
 	
 	CALLTEST();
-	RESETTEST();
+	RESETTEST(); */
 }
 
 /**
