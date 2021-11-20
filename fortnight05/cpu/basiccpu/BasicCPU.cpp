@@ -127,7 +127,11 @@ int BasicCPU::ID()
 		// implementar o GRUPO A SEGUIR
 		//
 		// 101x Loads and Stores on page C4-237
-
+		
+		case 0x18000000:
+        case 0x1C000000:
+		 	return decodeLoadStore();
+		 	break; 
 		
 		// ATIVIDADE FUTURA
 		// implementar os demais grupos
