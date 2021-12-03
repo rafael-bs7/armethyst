@@ -71,9 +71,9 @@ FACache::FACache(unsigned int size, unsigned int lineSize) : Cache::Cache(size, 
 	// validar se associativity*lineSize == size
 
 	if(associativity*lineSize == size){
-		verify_size = (size & (size-1));
-		verify_lineSize = (lineSize & (lineSize-1));
-		verify_associativity = (associativity & (associativity-1));
+		int verify_size = (size & (size-1));
+		int verify_lineSize = (lineSize & (lineSize-1));
+		int verify_associativity = (associativity & (associativity-1));
 
 		if((verify_size==0) and  (verify_lineSize==0) and (verify_associativity==0)){
 			validArgs = true;
@@ -100,7 +100,8 @@ FACache::FACache(unsigned int size, unsigned int lineSize) : Cache::Cache(size, 
 	//directory = (uint64_t *) malloc (sizeof (associativity));
 
 	directory = new uint64_t[associativity];
-	status = new bool[associativity]=0;
+	status = new bool[associativity];
+	*status = 0;
 }
 
 FACache::~FACache() {
