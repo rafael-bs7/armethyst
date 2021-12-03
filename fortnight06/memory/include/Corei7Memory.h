@@ -6,11 +6,11 @@
 
     (PT) armethyst - Um simulador ARM simples escrito em C++ para o ensino de
     Arquitetura de Computadores. Software livre licenciado pela MIT License
-    (veja a licença, em inglês, abaixo).
+    (veja a licenï¿½a, em inglï¿½s, abaixo).
 
     (EN) MIT LICENSE:
 
-    Copyright 2020 André Vital Saúde
+    Copyright 2020 Andrï¿½ Vital Saï¿½de
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -43,10 +43,21 @@ class Corei7Memory : public Memory
 {
 protected:
 	// TODO
-	// Esta implementação de Corei7Memory é uma mera delegação para a memória principal, declarada
+	// Esta implementaï¿½ï¿½o de Corei7Memory ï¿½ uma mera delegaï¿½ï¿½o para a memï¿½ria principal, declarada
 	// como o atributo mainMemory, tipo BasicMemory.
-	// 1. Acrescente os atributos l1i, l1d e l2, que correspondem às caches L1 de instruções, L1 de
-	//		dados e L2, mista. Todas são caches associativas por conjunto.
+	// 1. Acrescente os atributos l1i, l1d e l2, que correspondem ï¿½s caches L1 de instruï¿½ï¿½es, L1 de
+	//		dados e L2, mista. Todas sï¿½o caches associativas por conjunto.
+	
+	SACache* li1;
+	SACache* l1d;
+	SACache* l2;
+
+//	int l1i = 2048;
+//	int l1d = 2048;
+//	int l2 = 8000;
+
+
+	
 	BasicMemory *mainMemory;
 
 public:
@@ -59,33 +70,33 @@ public:
 	char * getData();
 
 	/**
-	 * Lê uma instrução de 32 bits considerando um endereçamento em bytes.
+	 * Lï¿½ uma instruï¿½ï¿½o de 32 bits considerando um endereï¿½amento em bytes.
 	 */
 	uint32_t readInstruction32(uint64_t address);
 
 	/**
-	 * Lê um dado de 32 bits considerando um endereçamento em bytes.
+	 * Lï¿½ um dado de 32 bits considerando um endereï¿½amento em bytes.
 	 */
 	uint32_t readData32(uint64_t address);
 
 	/**
-	 * Lê um dado de 64 bits considerando um endereçamento em bytes.
+	 * Lï¿½ um dado de 64 bits considerando um endereï¿½amento em bytes.
 	 */
 	uint64_t readData64(uint64_t address);
 	
 	/**
-	 * Escreve uma instrução de 32 bits considerando um
-	 * endereçamento em bytes.
+	 * Escreve uma instruï¿½ï¿½o de 32 bits considerando um
+	 * endereï¿½amento em bytes.
 	 */
 	void writeInstruction32(uint64_t address, uint32_t value);
 
 	/**
-	 * Escreve um dado (value) de 32 bits considerando um endereçamento em bytes.
+	 * Escreve um dado (value) de 32 bits considerando um endereï¿½amento em bytes.
 	 */
 	void writeData32(uint64_t address, uint32_t value);
 
 	/**
-	 * Escreve um dado (value) de 64 bits considerando um endereçamento em bytes.
+	 * Escreve um dado (value) de 64 bits considerando um endereï¿½amento em bytes.
 	 */
 	void writeData64(uint64_t address, uint64_t value);
 

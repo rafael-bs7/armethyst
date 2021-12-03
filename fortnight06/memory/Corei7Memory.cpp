@@ -6,11 +6,11 @@
 
     (PT) armethyst - Um simulador ARM simples escrito em C++ para o ensino de
     Arquitetura de Computadores. Software livre licenciado pela MIT License
-    (veja a licença, em inglês, abaixo).
+    (veja a licenï¿½a, em inglï¿½s, abaixo).
 
     (EN) MIT LICENSE:
 
-    Copyright 2020 André Vital Saúde
+    Copyright 2020 Andrï¿½ Vital Saï¿½de
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -45,37 +45,46 @@ Corei7Memory::Corei7Memory(int size)
 Corei7Memory::~Corei7Memory()
 {
 	// TODO
-	// 1. Fazer 'delete' para toda a memória alocada. Uma boa implementação só terá
-	//		alocado memória no construtor ou nos métodos por ele chamados.
+	// 1. Fazer 'delete' para toda a memï¿½ria alocada. Uma boa implementaï¿½ï¿½o sï¿½ terï¿½
+	//		alocado memï¿½ria no construtor ou nos mï¿½todos por ele chamados.
+
+	// fazer delete dos cache
+	delete l1d;
+	delete l1i;
+	delete l2;
 	delete[] mainMemory;
 }
 
 /**
- * Inicializa a hierarquia de memória. O ideal seria que este procedimento utilizasse um arquivo de configuração,
- * que descreveria a organização de toda a hierarquia de memória. Mas, para facilitar, vamos fazer isso hard-coded,
- * ou seja, no código mesmo!
+ * Inicializa a hierarquia de memï¿½ria. O ideal seria que este procedimento utilizasse um arquivo de configuraï¿½ï¿½o,
+ * que descreveria a organizaï¿½ï¿½o de toda a hierarquia de memï¿½ria. Mas, para facilitar, vamos fazer isso hard-coded,
+ * ou seja, no cï¿½digo mesmo!
  */
 void Corei7Memory::initHierarchy() {
 	// TODO
-	// A instanciação da memória principal já está implementada no construtor.
+	// A instanciaï¿½ï¿½o da memï¿½ria principal jï¿½ estï¿½ implementada no construtor.
 	// 1. Instanciar as caches, conforme hierarquia definida no enunciado do trabalho:
-	// 		l1i: cache de 2KB, 4 vias, linhas de 64B (escrita não se aplica)
-	// 		l1d: cache de 2KB, 8 vias, linhas de 64B, estratégia write-through
-	// 		l2: cache de 8KB, 8 vias, linhas de 64B, estratégia writeback
+	// 		l1i: cache de 2KB, 4 vias, linhas de 64B (escrita nï¿½o se aplica)
+	// 		l1d: cache de 2KB, 8 vias, linhas de 64B, estratï¿½gia write-through
+	// 		l2: cache de 8KB, 8 vias, linhas de 64B, estratï¿½gia writeback
+
+	l1i = new SACache(2048, 64, 4);
+	l1d = new SACache(2048, 64, 8);
+	l2 = new SACache(8192,64,8);
 }
 
 /**
- * Retorna o ponteiro para o início da memória.
+ * Retorna o ponteiro para o inï¿½cio da memï¿½ria.
  */
 char *Corei7Memory::getData() {
 	return mainMemory->getData();
 }
 
 /**
- * Lê uma instrução de 32 bits considerando um endereçamento em bytes.
+ * Lï¿½ uma instruï¿½ï¿½o de 32 bits considerando um endereï¿½amento em bytes.
  *
  * BasicMemory.cpp implementa a arquitetura de Von Neumman, com apenas uma
- * memória, que armazena instruções e dados.
+ * memï¿½ria, que armazena instruï¿½ï¿½es e dados.
  */
 uint32_t Corei7Memory::readInstruction32(uint64_t address)
 {
@@ -83,26 +92,43 @@ uint32_t Corei7Memory::readInstruction32(uint64_t address)
 	uint32_t value;
 	
 	// TODO
-	// 1. Implementar a simulação do comportamento da cache real, ou seja:
+	// 1. Implementar a simulaï¿½ï¿½o do comportamento da cache real, ou seja:
 	//		Verificar l1i
 	//			se hit, hitLevel = 1, retorna dado lido
-	//			senão, verificar l2
+	//			senï¿½o, verificar l2
 	//				se hit
 	//					hitLevel = 2, fetch da linha para l1i, retorna dado lido
-	//				senão
-	//					ler dado da memória principal
+	//				senï¿½o
+	//					ler dado da memï¿½ria principal
 	//					hitLevel = 3, fetch da linha para l1i e para l2, retorna dado lido
 
-	// TODO a linha a seguir deve entrar na lógica acima
-	value = mainMemory->readInstruction32(address);
+	if(li1->read32(address, &value)){
+		hitLevel=1;		
+	}else{
+		if(l2->read32(address, &value)){
+			hitLevel=2;
+			l1i->fetchLine(address, mainMemory->getData());
+			// l1i->write32(address,l2->fetchLine(address, value));
+			
+		}else{
+			hitLevel=3;
+			l1i->fetchLine(address, mainMemory->getData());
+			l2->fetchLine(address, mainMemory->getData());
+
+			//l1i.write32(address,l2.fetchLine(address, value));
+			// TODO a linha a seguir deve entrar na lï¿½gica acima
+			value = mainMemory->readInstruction32(address);
+		}
+	}
+
 	
-	// não mexa nas linhas a seguir, são necessárias para a correção do trabalho
+	// nï¿½o mexa nas linhas a seguir, sï¿½o necessï¿½rias para a correï¿½ï¿½o do trabalho
 	logger->memlog(MemoryLogger::READI,address,hitLevel);
 	return value;
 }
 
 /**
- * Lê um dado de 32 bits considerando um endereçamento em bytes.
+ * Lï¿½ um dado de 32 bits considerando um endereï¿½amento em bytes.
  */
 uint32_t Corei7Memory::readData32(uint64_t address)
 {
@@ -110,19 +136,36 @@ uint32_t Corei7Memory::readData32(uint64_t address)
 	uint32_t value;
 	
 	// TODO
-	// 1. Replicar o código de readInstruction32, alterando apenas l1i para l1d e
-	//	os métodos delegados.
+	// 1. Replicar o cï¿½digo de readInstruction32, alterando apenas l1i para l1d e
+	//	os mï¿½todos delegados.
 
-	// TODO a linha a seguir deve entrar na lógica da hierarquia
-	value = mainMemory->readData32(address);
 	
-	// não mexa nas linhas a seguir, são necessárias para a correção do trabalho
+	if(l1d->read32(address, &value)){
+		hitLevel=1;		
+	}else{
+		if(l2->read32(address, &value)){
+			hitLevel=2;
+			l1d->fetchLine(address, mainMemory->getData());
+			// l1i->write32(address,l2->fetchLine(address, value));
+			
+		}else{
+			hitLevel=3;
+			l1d->fetchLine(address, mainMemory->getData());
+			l2->fetchLine(address, mainMemory->getData());
+
+			//l1i.write32(address,l2.fetchLine(address, value));
+			// TODO a linha a seguir deve entrar na lï¿½gica acima
+			value = mainMemory->readData32(address);
+		}
+	}
+	
+	// nï¿½o mexa nas linhas a seguir, sï¿½o necessï¿½rias para a correï¿½ï¿½o do trabalho
 	logger->memlog(MemoryLogger::READ32,address,hitLevel);
 	return value;
 }
 
 /**
- * Lê um dado de 64 bits considerando um endereçamento em bytes.
+ * Lï¿½ um dado de 64 bits considerando um endereï¿½amento em bytes.
  */
 uint64_t Corei7Memory::readData64(uint64_t address)
 {
@@ -130,20 +173,38 @@ uint64_t Corei7Memory::readData64(uint64_t address)
 	uint64_t value;
 	
 	// TODO
-	// 1. Replicar o código de readInstruction32, alterando apenas l1i para l1d e
-	//	os métodos delegados.
+	// 1. Replicar o cï¿½digo de readInstruction32, alterando apenas l1i para l1d e
+	//	os mï¿½todos delegados.
 
-	// TODO a linha a seguir deve entrar na lógica da hierarquia
-	value = mainMemory->readData64(address);
 	
-	// não mexa nas linhas a seguir, são necessárias para a correção do trabalho
+	if(l1d->read64(address, &value)){
+		hitLevel=1;		
+	}else{
+		if(l2->read64(address, &value)){
+			hitLevel=2;
+			l1d->fetchLine(address, mainMemory->getData());
+			// l1i->write32(address,l2->fetchLine(address, value));
+			
+		}else{
+			hitLevel=3;
+			l1d->fetchLine(address, mainMemory->getData());
+			l2->fetchLine(address, mainMemory->getData());
+
+			//l1i.write32(address,l2.fetchLine(address, value));
+			// TODO a linha a seguir deve entrar na lï¿½gica acima
+			value = mainMemory->readData64(address);
+		}
+	}
+	
+	
+	// nï¿½o mexa nas linhas a seguir, sï¿½o necessï¿½rias para a correï¿½ï¿½o do trabalho
 	logger->memlog(MemoryLogger::READ64,address,hitLevel);
 	return value;
 }
 
 /**
- * Escreve uma instrução de 32 bits considerando um
- * endereçamento em bytes.
+ * Escreve uma instruï¿½ï¿½o de 32 bits considerando um
+ * endereï¿½amento em bytes.
  */
 void Corei7Memory::writeInstruction32(uint64_t address, uint32_t value)
 {
@@ -151,40 +212,76 @@ void Corei7Memory::writeInstruction32(uint64_t address, uint32_t value)
 }
 
 /**
- * Escreve um dado (value) de 32 bits considerando um endereçamento em bytes.
+ * Escreve um dado (value) de 32 bits considerando um endereï¿½amento em bytes.
  */
 void Corei7Memory::writeData32(uint64_t address, uint32_t value)
 {
 	int hitLevel = 1;
 	
 	// TODO
-	// 1. Replicar o código de readInstruction32, alterando apenas l1i para l1d e
-	//	os métodos delegados.
-	// 2. Acrescente à lógica implementada, as questões de manutenção da coerência
-	//	de cache, utilizando as estratégias write-through ou writeback, conforme
+	// 1. Replicar o cï¿½digo de readInstruction32, alterando apenas l1i para l1d e
+	//	os mï¿½todos delegados.
+	// 2. Acrescente ï¿½ lï¿½gica implementada, as questï¿½es de manutenï¿½ï¿½o da coerï¿½ncia
+	//	de cache, utilizando as estratï¿½gias write-through ou writeback, conforme
 	//	enunciado.
 
-	// TODO a linha a seguir deve entrar na lógica da hierarquia
-	mainMemory->writeData32(address,value);
+
+	if(l1d->write32(address, value)){
+		hitLevel=1;
+		l2->write32(address, value);
+		mainMemory->writeData32(address, value);
+
+	}else{
+		if(l2->write32(address, value)){
+			hitLevel=2;
+			mainMemory->write32(address, value);
+			l1d->fetchLine(address, mainMemory->getData());
+			// l1i->write32(address,l2->fetchLine(address, value));	
+		}else{
+			hitLevel=3;
+			mainMemory->writeData32(address, value);
+			l1d->fetchLine(address, mainMemory->getData());
+			l2->fetchLine(address, mainMemory->getData());
+		}
+	}
 	
-	// não mexa nas linhas a seguir, são necessárias para a correção do trabalho
+	// nï¿½o mexa nas linhas a seguir, sï¿½o necessï¿½rias para a correï¿½ï¿½o do trabalho
 	logger->memlog(MemoryLogger::WRITE32,address,hitLevel);
 }
 
 /**
- * Escreve um dado (value) de 64 bits considerando um endereçamento em bytes.
+ * Escreve um dado (value) de 64 bits considerando um endereï¿½amento em bytes.
  */
 void Corei7Memory::writeData64(uint64_t address, uint64_t value)
 {
 	int hitLevel = 1;
 	
 	// TODO
-	// 1. Replicar o código de writeData32, alterando apenas o que for necessário para
+	// 1. Replicar o cï¿½digo de writeData32, alterando apenas o que for necessï¿½rio para
 	//	a escrita 64 bits.
 
-	// TODO a linha a seguir deve entrar na lógica da hierarquia
+	if(l1d->write64(address, &value)){
+		hitLevel=1;
+		l2->write64(address, &value);
+		mainMemory->writeData64(address, &value);
+
+	}else{
+		if(l2->write64(address, &value)){
+			hitLevel=2;
+			mainMemory->write64(address, &value);
+			l1d->fetchLine(address, mainMemory->getData());
+			// l1i->write32(address,l2->fetchLine(address, value));	
+		}else{
+			hitLevel=3;
+			mainMemory->writeData64(address, &value);
+			l1d->fetchLine(address, mainMemory->getData());
+			l2->fetchLine(address, mainMemory->getData());
+		}
+	}
+	
+	// TODO a linha a seguir deve entrar na lï¿½gica da hierarquia
 	mainMemory->writeData64(address,value);
 	
-	// não mexa nas linhas a seguir, são necessárias para a correção do trabalho
+	// nï¿½o mexa nas linhas a seguir, sï¿½o necessï¿½rias para a correï¿½ï¿½o do trabalho
 	logger->memlog(MemoryLogger::WRITE64,address,hitLevel);
 }

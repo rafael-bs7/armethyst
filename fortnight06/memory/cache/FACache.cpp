@@ -6,11 +6,11 @@
 
     (PT) armethyst - Um simulador ARM simples escrito em C++ para o ensino de
     Arquitetura de Computadores. Software livre licenciado pela MIT License
-    (veja a licença, em inglês, abaixo).
+    (veja a licenï¿½a, em inglï¿½s, abaixo).
 
     (EN) MIT LICENSE:
 
-    Copyright 2020 André Vital Saúde
+    Copyright 2020 Andrï¿½ Vital Saï¿½de
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -31,11 +31,23 @@
     SOFTWARE.
 
    ----------------------------------------------------------------------------
+
+	INTEGRANTES:
+			
+	- JULIO CESAR SILVERIO          - 201710891
+	- LUIZ FERNANDO ALVES RODRIGUES  -201610292
+	- RAFAEL BARBOSA DE SOUZA       - 201820522
+	- VINICIUS PONTES PEREIRA LIMA  - 201520766
+
 */
+
+
 
 #include "FACache.h"
 
 #include <cstddef>
+#include<math.h>
+
 
 using namespace std;
 
@@ -50,11 +62,24 @@ FACache::FACache(unsigned int size, unsigned int lineSize) : Cache::Cache(size, 
 
 	bool validArgs = false;
 	// TODO
-	// 1. Note que este construtor chama o construtor da superclasse! Veja o que já é feito
+	// 1. Note que este construtor chama o construtor da superclasse! Veja o que jï¿½ ï¿½ feito
 	//		no construtor da superclasse.
 	// 2. Validar os atributos que acabam e ser inicializados na superclasse:
-	//		size é um múltiplo de lineSize? ou seja, associativity*lineSize == size?
-	//		size, lineSize e associativity são potências de 2?
+	//		size ï¿½ um mï¿½ltiplo de lineSize? ou seja, associativity*lineSize == size?
+	//		size, lineSize e associativity sï¿½o potï¿½ncias de 2?
+
+	// validar se associativity*lineSize == size
+
+	if(associativity*lineSize == size){
+		verify_size = (size & (size-1));
+		verify_lineSize = (lineSize & (lineSize-1));
+		verify_associativity = (associativity & (associativity-1));
+
+		if((verify_size==0) and  (verify_lineSize==0) and (verify_associativity==0)){
+			validArgs = true;
+		}
+	}
+
 	if (!validArgs) {
 		throw "Bad FACache initialization. Invalid arguments.";
 	}
@@ -63,13 +88,29 @@ FACache::FACache(unsigned int size, unsigned int lineSize) : Cache::Cache(size, 
 	
 	// TODO
 	// 3. Alocar o atributo 'data' com 'size' bytes
+	
+//	data = (char *) malloc (sizeof (size));
+
+	data = new char[size];
+
+
+//	free(pi); libera o char alocado
+
 	// 4. Alocar o atributo 'directory' com 'associativity' elementos uint64_t
+	//directory = (uint64_t *) malloc (sizeof (associativity));
+
+	directory = new uint64_t[associativity];
+	status = new bool[associativity]=0;
 }
 
 FACache::~FACache() {
 	// TODO
-	// 1. Fazer 'delete' para toda a memória alocada. Uma boa implementação só terá
-	//		alocado memória no construtor.
+	// 1. Fazer 'delete' para toda a memï¿½ria alocada. Uma boa implementaï¿½ï¿½o sï¿½ terï¿½
+	//		alocado memï¿½ria no construtor.
+	
+	delete data;
+	delete directory;  
+	delete status;
 }
 
 /**
@@ -81,29 +122,57 @@ FACache::~FACache() {
  */
 bool FACache::read32(uint64_t address, uint32_t * value) {
 	// TODO
-	// 1. Encontre a tag e o offset do address. O offset é a parte menos significativa
-	//		de 'address', correspondente ao número de bits necessários para identificar
-	//		cada byte na linha. Sugestão: faça um ou mais procedimentos, pois isso será
-	//		utilizado nos próximos métodos.
-	//			Exemplo: se lineSize = 64 (2^6), são 6 bits de offset e 26 bits de tag.
-	//			O próprio atributo lineSize e sua inversão bit a bit (~lineSize) podem
-	//			ser usados para separar tag e offset do address. Mas ATENÇÃO: address
-	//			é uint64_t e lineSize é unsigned int, faça as devidas conversões!
-	// 2. Percorra o diretório do cache verificando se a tag é encontrada e, se
-	//		encontrada, em qual índice foi encontrada. Sugestão: faça um procedimento,
-	//		pois isso será utilizado nos próximos métodos.
-	// 3. Se a tag não foi encontrada (cache miss), retorne false
+	// 1. Encontre a tag e o offset do address. O offset ï¿½ a parte menos significativa
+	//		de 'address', correspondente ao nï¿½mero de bits necessï¿½rios para identificar
+	//		cada byte na linha. Sugestï¿½o: faï¿½a um ou mais procedimentos, pois isso serï¿½
+	//		utilizado nos prï¿½ximos mï¿½todos.
+	//			Exemplo: se lineSize = 64 (2^6), sï¿½o 6 bits de offset e 26 bits de tag.
+	//			O prï¿½prio atributo lineSize e sua inversï¿½o bit a bit (~lineSize) podem
+	//			ser usados para separar tag e offset do address. Mas ATENï¿½ï¿½O: address
+	//			ï¿½ uint64_t e lineSize ï¿½ unsigned int, faï¿½a as devidas conversï¿½es!
+	// 2. Percorra o diretï¿½rio do cache verificando se a tag ï¿½ encontrada e, se
+	//		encontrada, em qual ï¿½ndice foi encontrada. Sugestï¿½o: faï¿½a um procedimento,
+	//		pois isso serï¿½ utilizado nos prï¿½ximos mï¿½todos.
+	// 3. Se a tag nï¿½o foi encontrada (cache miss), retorne false
 	// 4. Se a tag foi encontrada (cache hit), leia o valor na linha do cache, escreva-o
-	//		no argumento de saída 'value' e retorne true.
-	//			DESAFIO: toda a cache está implementada como um único vetor de bytes,
-	//			declarado na forma do atributo 'data'. A variável 'data' é o endereço
-	//			do primeiro byte da cache, ou seja, é também o endereço do início da
-	//			primeira linha do cache. O endereço do ínicio da segunda linha do cache
-	//			é 'data + lineSize', o do início da terceira linha do cache é 'data + 2*lineSize',
-	//			e assim por diante. Logo, o endereço do início da linha precisa ser
-	//			calculado com o uso do índice encontrado no passo 2 acima. Após obtido o
-	//			endereço do início da linha, é preciso convertê-lo para um ponteiro do
-	//			tipo de dado sendo lido. Não é uma tarefa trivial.
+	//		no argumento de saï¿½da 'value' e retorne true.
+	//			DESAFIO: toda a cache estï¿½ implementada como um ï¿½nico vetor de bytes,
+	//			declarado na forma do atributo 'data'. A variï¿½vel 'data' ï¿½ o endereï¿½o
+	//			do primeiro byte da cache, ou seja, ï¿½ tambï¿½m o endereï¿½o do inï¿½cio da
+	//			primeira linha do cache. O endereï¿½o do ï¿½nicio da segunda linha do cache
+	//			ï¿½ 'data + lineSize', o do inï¿½cio da terceira linha do cache ï¿½ 'data + 2*lineSize',
+	//			e assim por diante. Logo, o endereï¿½o do inï¿½cio da linha precisa ser
+	//			calculado com o uso do ï¿½ndice encontrado no passo 2 acima. Apï¿½s obtido o
+	//			endereï¿½o do inï¿½cio da linha, ï¿½ preciso convertï¿½-lo para um ponteiro do
+	//			tipo de dado sendo lido. Nï¿½o ï¿½ uma tarefa trivial.
+	
+
+
+	int qt_bits_offset = log2(lineSize);
+	uint64_t mask = FFFFFFFFFFFFFFFF;   // 64bits
+	mask = (mask>>qt_bits_offset)<<qt_bits_offset;
+
+	uint64_t tag = (address &  mask);
+	uint32_t offset = (address & ~mask);
+
+	int pos=-1;
+	for(int i = 0; i<associativity; i++){
+		if(directory[i] == tag){
+			pos = i;
+			i = associativity;
+		}
+	}
+
+	if(pos==-1){
+		return false;  // tag nao foi encontrada status = miss;
+	}else{
+		uint32_t* intptr = (uint32_t *)(&(data[lineSize * pos]));
+		
+		*value = intptr[offset>>2];
+		return true;
+	}
+	
+	
 	return false;
 }
 
@@ -116,12 +185,36 @@ bool FACache::read32(uint64_t address, uint32_t * value) {
  */
 bool FACache::read64(uint64_t address, uint64_t * value) {
 	// TODO
-	// A única diferença da implementação de read64 para a de read32 é o Passo 4.
-	// 1, 2 e 3. Copie a implementação dos Passos 1, 2 e 3 de read32 para este método, pois é o
-	//		mesmo código.
+	// A ï¿½nica diferenï¿½a da implementaï¿½ï¿½o de read64 para a de read32 ï¿½ o Passo 4.
+	// 1, 2 e 3. Copie a implementaï¿½ï¿½o dos Passos 1, 2 e 3 de read32 para este mï¿½todo, pois ï¿½ o
+	//		mesmo cï¿½digo.
 	// 4. Repita o Passo 4 de read32, alterando apenas o tipo do dado lido. Em read32
-	//		é preciso converter um vetor e o índice a ser lido de char * para uint32_t *,
-	//		enquanto em read64 é preciso converter de char * para uint64_t *.
+	//		ï¿½ preciso converter um vetor e o ï¿½ndice a ser lido de char * para uint32_t *,
+	//		enquanto em read64 ï¿½ preciso converter de char * para uint64_t *.
+
+
+	int qt_bits_offset = log2(lineSize);
+	uint64_t mask = FFFFFFFFFFFFFFFF;   // 64bits
+	mask = (mask>>qt_bits_offset)<<qt_bits_offset;
+
+	uint64_t tag = (address &  mask);
+	uint32_t offset = (address & ~mask);
+
+	int pos=-1;
+	for(int i = 0; i<associativity; i++){
+		if(directory[i] == tag){
+			pos = i;
+			i = associativity;
+		}
+	}
+
+	if(pos==-1){
+		return false;  // tag nao foi encontrada status = miss;
+	}else{
+		uint64_t* intptr = (uint64_t *)(&(data[lineSize * pos]));
+		*value = intptr[offset>>3];
+		return true;
+	}
 	return false;
 }
 
@@ -134,22 +227,50 @@ bool FACache::read64(uint64_t address, uint64_t * value) {
  */
 bool FACache::write32(uint64_t address, uint32_t value) {
 	// TODO
-	// A diferença do write32 para o read32 também é apenas o Passo 4, que agora se trata de escrita.
-	// 1, 2 e 3. Copie a implementação dos Passos 1, 2 e 3 de read32 para este método, pois é o
-	//		mesmo código.
+	// A diferenï¿½a do write32 para o read32 tambï¿½m ï¿½ apenas o Passo 4, que agora se trata de escrita.
+	// 1, 2 e 3. Copie a implementaï¿½ï¿½o dos Passos 1, 2 e 3 de read32 para este mï¿½todo, pois ï¿½ o
+	//		mesmo cï¿½digo.
 	// 4. Se a tag foi encontrada (cache hit), escreva o valor do argumento de entrada 'value'
 	//		 na linha do cache, altere o status da linha para 'modificado' e retorne true.
-	//			DESAFIO 1: o primeiro desafio é o mesmo de read32, a conversão do tipo do vetor de
+	//			DESAFIO 1: o primeiro desafio ï¿½ o mesmo de read32, a conversï¿½o do tipo do vetor de
 	//			dados para a escrita no local correto.
-	//			DESAFIO 2: o segundo desafio é o citado status 'modificado'. Ao se alterar um
+	//			DESAFIO 2: o segundo desafio ï¿½ o citado status 'modificado'. Ao se alterar um
 	//			valor na cache, ele deve ser marcado como modificado, para que o gestor da hierarquia
-	//			de memória saiba que precisa atualizar essa linha nos níveis mais baixos da hierarquia.
-	//			Você pode criar um vetor de bool, do tamanho do diretório do cache, mas é possível
-	//			fazer isso no próprio diretório, usando o bit menos significativo da tag, visto que
-	//			esse bit é sempre igual a 0. Você pode deixa-lo valendo 0, se a linha não possui
-	//			modificações, e 1, se a linha possui modificações. O único cuidado agora é no Passo 2,
-	//			quando a tag é buscada no diretório, mas se você implementou o Passo 2 como um
-	//			procedimento, será fácil adaptar.
+	//			de memï¿½ria saiba que precisa atualizar essa linha nos nï¿½veis mais baixos da hierarquia.
+	//			Vocï¿½ pode criar um vetor de bool, do tamanho do diretï¿½rio do cache, mas ï¿½ possï¿½vel
+	//			fazer isso no prï¿½prio diretï¿½rio, usando o bit menos significativo da tag, visto que
+	//			esse bit ï¿½ sempre igual a 0. Vocï¿½ pode deixa-lo valendo 0, se a linha nï¿½o possui
+	//			modificaï¿½ï¿½es, e 1, se a linha possui modificaï¿½ï¿½es. O ï¿½nico cuidado agora ï¿½ no Passo 2,
+	//			quando a tag ï¿½ buscada no diretï¿½rio, mas se vocï¿½ implementou o Passo 2 como um
+	//			procedimento, serï¿½ fï¿½cil adaptar.
+
+
+
+	
+	int qt_bits_offset = log2(lineSize);
+	uint64_t mask = FFFFFFFFFFFFFFFF;   // 64bits
+	mask = (mask>>qt_bits_offset)<<qt_bits_offset;
+
+	uint64_t tag = (address &  mask);
+	uint32_t offset = (address & ~mask);
+
+	int pos=-1;
+	for(int i = 0; i<associativity; i++){
+		if(directory[i] == tag){
+			pos = i;
+			i = associativity;
+		}
+	}
+
+
+	if(pos==-1){
+		return false;  // tag nao foi encontrada status = miss;
+	}else{
+		uint32_t* intptr = (uint32_t* )(&(data[lineSize * pos]));
+		intptr[offset>>2] = value;
+		status[pos] = true;
+		return true;
+	}
 	return false;
 }
 
@@ -162,11 +283,35 @@ bool FACache::write32(uint64_t address, uint32_t value) {
  */
 bool FACache::write64(uint64_t address, uint64_t value) {
 	// TODO
-	// A única diferença da implementação de write64 para a de write32 é o Passo 4.
-	// 1, 2 e 3. Copie a implementação dos Passos 1, 2 e 3 de write32 para este método, pois é o
-	//		mesmo código.
+	// A ï¿½nica diferenï¿½a da implementaï¿½ï¿½o de write64 para a de write32 ï¿½ o Passo 4.
+	// 1, 2 e 3. Copie a implementaï¿½ï¿½o dos Passos 1, 2 e 3 de write32 para este mï¿½todo, pois ï¿½ o
+	//		mesmo cï¿½digo.
 	// 4. Repita o Passo 4 de write32, alterando apenas o tipo do dado lido, uint64_t no lugar de
 	//		uint32_t.
+
+	int qt_bits_offset = log2(lineSize);
+	uint64_t mask = FFFFFFFFFFFFFFFF;   // 64bits
+	mask = (mask>>qt_bits_offset)<<qt_bits_offset;
+
+	uint64_t tag = (address &  mask);
+	uint32_t offset = (address & ~mask);
+
+	int pos=-1;
+	for(int i = 0; i<associativity; i++){
+		if(directory[i] == tag){
+			pos = i;
+			i = associativity;
+		}
+	}
+
+	if(pos==-1){
+		return false;  // tag nao foi encontrada status = miss;
+	}else{
+		uint64_t* intptr = (uint64_t *)(&(data[lineSize * pos]));
+		intptr[offset>>3] = value;
+		status[pos] = true;
+		return true;
+	}
 	return false;
 }
 
@@ -188,20 +333,48 @@ char * FACache::fetchLine(uint64_t address, char * data) {
 	int localWriteIndex = writeIndex;
 	
 	// TODO
-	// 1 e 2. Copie a implementação dos Passos 1 e 2 de read32 para este método, pois é o
-	//		mesmo código.
-	// 3. Se a tag foi encontrada no diretório, altere a variável localWriteIndex para o índice
+	// 1 e 2. Copie a implementaï¿½ï¿½o dos Passos 1 e 2 de read32 para este mï¿½todo, pois ï¿½ o
+	//		mesmo cï¿½digo.
+	// 3. Se a tag foi encontrada no diretï¿½rio, altere a variï¿½vel localWriteIndex para o ï¿½ndice
 	//		onde a tag foi encontrada.
-	// 4. Verifique se a linha número 'localWriteIndex' está marcada como modificada. Se não
-	//		estiver modificada, nada precisa ser feito. Se estiver modificada, faça:
-	//		1.1 aloque um vetor de 'lineSize' bytes para a variável 'removedLine';
-	//		1.2 copie toda a linha número 'localWriteIndex' (utilize memcpy) para 'removedLine'.
-	// 5. Copie 'lineSize' bytes de data para a linha número 'localWriteIndex' (utilize memcpy).
-	//		ATENÇÃO: a tag extraída de 'address' é também o índice do início da área de 'data'
-	//		que deve ser copiada, ou seja, você não irá copiar 'lineSize' bytes a partir do
-	//		endereço 'data', mas sim de &(data[tag]);
+	// 4. Verifique se a linha nï¿½mero 'localWriteIndex' estï¿½ marcada como modificada. Se nï¿½o
+	//		estiver modificada, nada precisa ser feito. Se estiver modificada, faï¿½a:
+	//		1.1 aloque um vetor de 'lineSize' bytes para a variï¿½vel 'removedLine';
+	//		1.2 copie toda a linha nï¿½mero 'localWriteIndex' (utilize memcpy) para 'removedLine'.
+	// 5. Copie 'lineSize' bytes de data para a linha nï¿½mero 'localWriteIndex' (utilize memcpy).
+	//		ATENï¿½ï¿½O: a tag extraï¿½da de 'address' ï¿½ tambï¿½m o ï¿½ndice do inï¿½cio da ï¿½rea de 'data'
+	//		que deve ser copiada, ou seja, vocï¿½ nï¿½o irï¿½ copiar 'lineSize' bytes a partir do
+	//		endereï¿½o 'data', mas sim de &(data[tag]);
 	
-	// atualiza o índice para o próximo fetch (estratégia FIFO para escolha da linha)
+	// atualiza o ï¿½ndice para o prï¿½ximo fetch (estratï¿½gia FIFO para escolha da linha)
+
+	
+	int qt_bits_offset = log2(lineSize);
+	uint64_t mask = FFFFFFFFFFFFFFFF;   // 64bits
+	mask = (mask>>qt_bits_offset)<<qt_bits_offset;
+
+	uint64_t tag = (address &  mask);
+	uint32_t offset = (address & ~mask);
+
+	int pos=-1;
+	for(int i = 0; i<associativity; i++){
+		if(directory[i] == tag){
+			pos = i;
+			i = associativity;
+		}
+	}
+
+	if(pos!=-1){
+		localWriteIndex = pos;
+	}
+
+	if(status[localWriteIndex]){
+		removedLine = new char [lineSize];
+		memcpy(&removedLine, &(data[localWriteIndex*lineSize]), lineSize);
+	}
+
+	memcpy(&(data[lineSize*localWriteIndex]), &(data[tag]), lineSize);
+
 	writeIndex = (writeIndex + 1) % associativity;
 	return removedLine;
 }
